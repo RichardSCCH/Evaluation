@@ -1,4 +1,4 @@
-__author__ = 'wasi'
+__author__ = 'richard'
 
 from . import bleu
-from . import rouge
+from . import rouge_impl

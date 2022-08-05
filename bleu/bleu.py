@@ -1,29 +1,21 @@
-#!/usr/bin/env python
-#
-# File Name : bleu.py
-#
-# Description : Wrapper for BLEU scorer.
-#
-# Creation Date : 06-01-2015
-# Last Modified : Thu 19 Mar 2015 09:13:28 PM PDT
-# Authors : Hao Fang <hfang@uw.edu> and Tsung-Yi Lin <tl483@cornell.edu>
-
-from .bleu_scorer import BleuScorer
+from numpy import average
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 
 class Bleu:
     def __init__(self, n=4):
-        # default compute Blue score up to 4
         self._n = n
         self._hypo_for_image = {}
         self.ref_for_image = {}
 
     def compute_score(self, gts, res, verbose=0):
         assert (sorted(gts.keys()) == sorted(res.keys()))
-        imgIds = list(gts.keys())
+        ids = list(gts.keys())
 
-        bleu_scorer = BleuScorer(n=self._n)
-        for id in imgIds:
+        scores = [[], [], [], []]
+        score = []
+
+        for id in ids:
             hypo = res[id]
             ref = gts[id]
 
@@ -32,14 +24,17 @@ class Bleu:
             assert (len(hypo) == 1)
             assert (type(ref) is list)
             assert (len(ref) >= 1)
+            reference = [ref[0].split()]
+            candidate = hypo[0].split()
+            score.append(sentence_bleu(reference, candidate, smoothing_function=SmoothingFunction().method4))
+            scores[0].append(sentence_bleu(reference, candidate, weights=(1, 0, 0, 0)))
+            scores[1].append(sentence_bleu(reference, candidate, weights=(0.5, 0.5, 0, 0)))
+            scores[2].append(sentence_bleu(reference, candidate, weights=(0.33, 0.33, 0.33, 0)))
+            scores[3].append(sentence_bleu(reference, candidate, weights=(0.25, 0.25, 0.25, 0.25)))
 
-            bleu_scorer += (hypo[0], ref)
+        avg_scores = [average(x) for x in scores]
 
-        # score, scores = bleu_scorer.compute_score(option='shortest')
-        score, scores, bleu = bleu_scorer.compute_score(option='closest', verbose=verbose)
-        # score, scores = bleu_scorer.compute_score(option='average', verbose=1)
-
-        return score, scores, bleu
+        return avg_scores, average(score), score
 
     def method(self):
         return "Bleu"
