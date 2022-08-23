@@ -1,12 +1,13 @@
+import csv
 import json
 import re
 import string
 
-import pandas as pd
-from bleu.bleu import Bleu
-from rouge_impl import RougeScorer
 import numpy as np
-import csv
+import pandas as pd
+
+from Evaluation.bleu import compute_bleu_score
+from Evaluation.rouge.rouge import compute_rouge_score
 
 
 def evaluate(predictions, references):
@@ -17,14 +18,14 @@ def evaluate(predictions, references):
         predictions (_type_): test text
         references (_type_): reference text
     """
-    scores_bleu, bleu, sentence_scores_bleu = Bleu(4).compute_score(references, predictions, 0)
+    scores_bleu, bleu, sentence_scores_bleu = compute_bleu_score(references, predictions)
     print("Bleu_1: ", np.mean(scores_bleu[0]))
     print("Bleu_2: ", np.mean(scores_bleu[1]))
     print("Bleu_3: ", np.mean(scores_bleu[2]))
     print("Bleu_4: ", np.mean(scores_bleu[3]))
     print("BLEU: ", bleu)
 
-    sentence_scores_rouge, score_rouge = RougeScorer().compute_score(references, predictions)
+    sentence_scores_rouge, score_rouge = compute_rouge_score(references, predictions)
     print("ROUGE-L: ", score_rouge)
 
     sentence_scores_rouge = [s['rougeL'].fmeasure for s in sentence_scores_rouge]
